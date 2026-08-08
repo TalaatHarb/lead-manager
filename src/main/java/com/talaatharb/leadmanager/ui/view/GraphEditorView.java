@@ -13,6 +13,8 @@ import javafx.scene.text.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+
 /**
  * A rudimentary graph-editor pane for building custom lead-finder pipelines.
  * <p>
@@ -97,7 +99,11 @@ public class GraphEditorView extends BorderPane {
 
     private void clearCanvas() {
         canvas.getChildren().clear();
-        graphModel.getNodes().forEach(n -> graphModel.removeNode(n.getId()));
+        // Collect IDs first to avoid ConcurrentModificationException on the live vertex set
+        List<String> ids = graphModel.getNodes().stream()
+                .map(LeadFinderNode::getId)
+                .toList();
+        ids.forEach(graphModel::removeNode);
         log.debug("Canvas cleared");
     }
 

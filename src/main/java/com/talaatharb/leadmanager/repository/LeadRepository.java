@@ -45,6 +45,7 @@ public class LeadRepository implements AutoCloseable {
 
     /** Persist a new lead. */
     public SalesLead save(SalesLead lead) {
+        lead.setUpdatedAt(LocalDateTime.now());
         leadsMap.put(lead.getId(), lead);
         db.commit();
         log.debug("Saved lead {}", lead.getId());

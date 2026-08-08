@@ -25,7 +25,6 @@
         <groovy.version>4.0.22</groovy.version>
         <richtextfx.version>0.11.3</richtextfx.version>
         <jgrapht.version>1.5.2</jgrapht.version>
-        <fxgl.version>21.1</fxgl.version>
         <slf4j.version>2.0.13</slf4j.version>
         <logback.version>1.5.7</logback.version>
         <junit.version>5.11.0</junit.version>
@@ -88,7 +87,7 @@
             <version>${groovy.version}</version>
         </dependency>
 
-        <!-- JGraphT – graph model for lead finder builder -->
+        <!-- graph editor view -->
         <dependency>
             <groupId>org.jgrapht</groupId>
             <artifactId>jgrapht-core</artifactId>

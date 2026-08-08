@@ -44,8 +44,9 @@ public class GroovyScriptRunner {
      * @throws ScriptException if the script contains errors
      */
     public Object execute(String script, Map<String, Object> bindings) throws ScriptException {
-        bindings.forEach(engine::put);
-        return engine.eval(script);
+        javax.script.Bindings scriptBindings = engine.createBindings();
+        scriptBindings.putAll(bindings);
+        return engine.eval(script, scriptBindings);
     }
 
     /**
@@ -58,7 +59,8 @@ public class GroovyScriptRunner {
     @SuppressWarnings("unchecked")
     public List<SalesLead> executeLeadFinderScript(String script) {
         try {
-            Object result = engine.eval(script);
+            javax.script.Bindings scriptBindings = engine.createBindings();
+            Object result = engine.eval(script, scriptBindings);
             if (result instanceof List<?> list) {
                 return (List<SalesLead>) list;
             }
