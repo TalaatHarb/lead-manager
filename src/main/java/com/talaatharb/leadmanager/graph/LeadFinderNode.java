@@ -31,7 +31,11 @@ public class LeadFinderNode implements Serializable {
     private double y;
 
     public LeadFinderNode(String label, NodeType type) {
-        this.id = UUID.randomUUID().toString();
+        this(UUID.randomUUID().toString(), label, type);
+    }
+
+    public LeadFinderNode(String id, String label, NodeType type) {
+        this.id = id;
         this.label = label;
         this.type = type;
         this.properties = new HashMap<>();

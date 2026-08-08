@@ -28,3 +28,26 @@
 .tab-pane > .tab-header-area > .headers-region > .tab:selected .tab-label {
     -fx-text-fill: white;
 }
+
+.keyword {
+    -fx-fill: #7c3aed;
+    -fx-font-weight: bold;
+}
+
+.string {
+    -fx-fill: #15803d;
+}
+
+.comment {
+    -fx-fill: #64748b;
+    -fx-font-style: italic;
+}
+
+.number {
+    -fx-fill: #b45309;
+}
+
+.annotation {
+    -fx-fill: #0f766e;
+    -fx-font-weight: bold;
+}

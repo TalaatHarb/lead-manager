@@ -11,6 +11,7 @@ import com.talaatharb.leadmanager.scraper.ScraperConfig;
 import com.talaatharb.leadmanager.scraper.WellfoundLeadFinder;
 import com.talaatharb.leadmanager.scraper.YCombinatorLeadFinder;
 import com.talaatharb.leadmanager.scripting.GroovyScriptRunner;
+import com.talaatharb.leadmanager.tracking.LeadFinderTracker;
 import com.talaatharb.leadmanager.ui.view.CodeEditorView;
 import com.talaatharb.leadmanager.ui.view.GraphEditorView;
 import javafx.collections.FXCollections;
@@ -34,10 +35,8 @@ public class MainController implements Initializable {
 
     private static final Logger log = LoggerFactory.getLogger(MainController.class);
 
-    // ---- FXML injections ----
     @FXML private TabPane mainTabPane;
 
-    // Leads tab
     @FXML private TableView<SalesLead> leadsTable;
     @FXML private TableColumn<SalesLead, String> colName;
     @FXML private TableColumn<SalesLead, String> colCompany;
@@ -45,7 +44,6 @@ public class MainController implements Initializable {
     @FXML private TableColumn<SalesLead, String> colStatus;
     @FXML private TableColumn<SalesLead, String> colSource;
 
-    // Form fields
     @FXML private TextField tfName;
     @FXML private TextField tfCompany;
     @FXML private TextField tfEmail;
@@ -55,35 +53,31 @@ public class MainController implements Initializable {
     @FXML private ComboBox<SalesLead.LeadStatus> cbStatus;
     @FXML private TextArea taNotes;
 
-    // Scraper tab
     @FXML private ComboBox<String> cbScraper;
     @FXML private TextArea taScraperLog;
 
-    // Editor tab placeholder
     @FXML private BorderPane editorPane;
-
-    // Graph editor tab placeholder
     @FXML private BorderPane graphPane;
 
-    // ---- Services ----
     private LeadRepository repository;
     private GroovyScriptRunner scriptRunner;
+    private LeadFinderTracker leadFinderTracker;
     private final ObservableList<SalesLead> leadData = FXCollections.observableArrayList();
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         repository = new LeadRepository();
         scriptRunner = new GroovyScriptRunner();
+        leadFinderTracker = new LeadFinderTracker();
 
         setupLeadsTable();
         setupStatusCombo();
         setupScraperCombo();
         setupCodeEditor();
         setupGraphEditor();
+        registerBuiltInLeadFinders();
         loadLeads();
     }
-
-    // ---- Setup helpers ----
 
     private void setupLeadsTable() {
         colName.setCellValueFactory(new PropertyValueFactory<>("name"));
@@ -115,17 +109,29 @@ public class MainController implements Initializable {
 
     private void setupCodeEditor() {
         if (editorPane != null) {
-            editorPane.setCenter(new CodeEditorView(scriptRunner));
+            editorPane.setCenter(new CodeEditorView(scriptRunner, leadFinderTracker));
         }
     }
 
     private void setupGraphEditor() {
         if (graphPane != null) {
-            graphPane.setCenter(new GraphEditorView());
+            graphPane.setCenter(new GraphEditorView(leadFinderTracker));
         }
     }
 
-    // ---- CRUD actions ----
+    private void registerBuiltInLeadFinders() {
+        builtInLeadFinders().forEach(leadFinderTracker::trackJavaLeadFinder);
+    }
+
+    private List<LeadFinder> builtInLeadFinders() {
+        return List.of(
+                new HackerNewsLeadFinder(),
+                new GithubTrendingLeadFinder(),
+                new LinkedInLeadFinder(),
+                new YCombinatorLeadFinder(),
+                new ProductHuntLeadFinder(),
+                new WellfoundLeadFinder());
+    }
 
     @FXML
     private void handleSave() {
@@ -164,18 +170,16 @@ public class MainController implements Initializable {
         clearForm();
     }
 
-    // ---- Scraper actions ----
-
     @FXML
     private void handleRunScraper() {
         String scraperName = cbScraper.getValue();
         LeadFinder finder = switch (scraperName) {
-            case "GitHub Trending"     -> new GithubTrendingLeadFinder();
-            case "LinkedIn Jobs"       -> new LinkedInLeadFinder();
-            case "Y Combinator Jobs"   -> new YCombinatorLeadFinder();
-            case "Product Hunt Today"  -> new ProductHuntLeadFinder();
+            case "GitHub Trending" -> new GithubTrendingLeadFinder();
+            case "LinkedIn Jobs" -> new LinkedInLeadFinder();
+            case "Y Combinator Jobs" -> new YCombinatorLeadFinder();
+            case "Product Hunt Today" -> new ProductHuntLeadFinder();
             case "Wellfound (AngelList)" -> new WellfoundLeadFinder();
-            default                    -> new HackerNewsLeadFinder();
+            default -> new HackerNewsLeadFinder();
         };
 
         ScraperConfig config = ScraperConfig.defaultConfig();
@@ -199,8 +203,6 @@ public class MainController implements Initializable {
             }
         }, "scraper-thread").start();
     }
-
-    // ---- Helpers ----
 
     private void loadLeads() {
         leadData.setAll(repository.findAll());
@@ -242,6 +244,9 @@ public class MainController implements Initializable {
 
     @FXML
     private void handleExit() {
+        if (leadFinderTracker != null) {
+            leadFinderTracker.close();
+        }
         if (repository != null) {
             repository.close();
         }
