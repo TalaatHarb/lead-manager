@@ -34,12 +34,12 @@ public final class LeadFinderGraphSerializer {
             snapshot.getEdges().add(edgeSnapshot);
         });
 
-        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-             XMLEncoder encoder = new XMLEncoder(outputStream)) {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        try (XMLEncoder encoder = new XMLEncoder(outputStream)) {
             encoder.writeObject(snapshot);
             encoder.flush();
-            return outputStream.toString(StandardCharsets.UTF_8);
         }
+        return outputStream.toString(StandardCharsets.UTF_8);
     }
 
     public static LeadFinderGraph deserialize(String serializedGraph) {

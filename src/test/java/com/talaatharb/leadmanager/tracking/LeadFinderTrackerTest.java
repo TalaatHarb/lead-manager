@@ -23,8 +23,8 @@ class LeadFinderTrackerTest {
 
     @Test
     void trackJavaScriptAndGraphLeadFinders() {
-        try (LeadFinderRepository repository = new LeadFinderRepository(tempDir.resolve("lead-finders.db"));
-             LeadFinderTracker tracker = new LeadFinderTracker(repository)) {
+        LeadFinderRepository repository = new LeadFinderRepository(tempDir.resolve("lead-finders.db"));
+        try (LeadFinderTracker tracker = new LeadFinderTracker(repository)) {
             tracker.trackJavaLeadFinder(new HackerNewsLeadFinder());
             tracker.trackGroovyScript("Custom Script", "return []");
 
@@ -59,14 +59,14 @@ class LeadFinderTrackerTest {
 
     @Test
     void trackingSameNameUpdatesExistingDefinition() {
-        try (LeadFinderRepository repository = new LeadFinderRepository(tempDir.resolve("lead-finders-update.db"));
-             LeadFinderTracker tracker = new LeadFinderTracker(repository)) {
+        LeadFinderRepository repository = new LeadFinderRepository(tempDir.resolve("lead-finders-update.db"));
+        try (LeadFinderTracker tracker = new LeadFinderTracker(repository)) {
             tracker.trackGroovyScript("Custom Script", "return [1]");
             tracker.trackGroovyScript("Custom Script", "return [2]");
 
             List<LeadFinderDefinition> definitions = tracker.findAll();
             assertEquals(1, definitions.size());
-            assertEquals("return [2]", definitions.getFirst().getScript());
+            assertEquals("return [2]", definitions.get(0).getScript());
         }
     }
 }

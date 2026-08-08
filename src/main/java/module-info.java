@@ -4,6 +4,7 @@ module com.talaatharb.leadmanager {
     requires javafx.fxml;
     requires javafx.web;
     requires java.scripting;
+    requires java.desktop;
 
     requires org.fxmisc.richtext;
     requires org.fxmisc.flowless;

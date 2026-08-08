@@ -16,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.script.ScriptException;
-import java.time.Duration;
 import java.util.Collections;
 
 /**
@@ -45,9 +44,7 @@ public class CodeEditorView extends BorderPane {
         codeArea.setParagraphGraphicFactory(LineNumberFactory.get(codeArea));
         codeArea.setStyle("-fx-font-family: monospace; -fx-font-size: 13;");
         codeArea.replaceText(0, 0, getSampleScript());
-        codeArea.multiPlainChanges()
-                .successionEnds(Duration.ofMillis(75))
-                .subscribe(ignore -> applyHighlighting());
+        codeArea.textProperty().addListener((obs, oldText, newText) -> applyHighlighting());
         applyHighlighting();
 
         outputArea = new TextArea();
