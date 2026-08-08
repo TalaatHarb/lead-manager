@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentMap;
 
@@ -53,10 +54,7 @@ public class LeadFinderRepository implements AutoCloseable {
     }
 
     public LeadFinderDefinition update(LeadFinderDefinition definition) {
-        definition.setUpdatedAt(LocalDateTime.now());
-        leadFindersMap.put(definition.getId(), definition);
-        db.commit();
-        return definition;
+        return save(definition);
     }
 
     public Optional<LeadFinderDefinition> findById(String id) {
@@ -66,6 +64,15 @@ public class LeadFinderRepository implements AutoCloseable {
     public List<LeadFinderDefinition> findAll() {
         Collection<LeadFinderDefinition> values = leadFindersMap.values();
         return new ArrayList<>(values);
+    }
+
+    public Optional<LeadFinderDefinition> findByNameAndType(String name, LeadFinderDefinition.LeadFinderType type) {
+        Objects.requireNonNull(name, "name");
+        Objects.requireNonNull(type, "type");
+        return leadFindersMap.values().stream()
+                .filter(definition -> type == definition.getType())
+                .filter(definition -> name.equals(definition.getName()))
+                .findFirst();
     }
 
     public boolean deleteById(String id) {

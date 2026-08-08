@@ -34,8 +34,14 @@ public final class GroovySyntaxHighlighter {
     }
 
     public static StyleSpans<Collection<String>> computeHighlighting(String text) {
-        List<Token> tokens = new LinkedList<>();
         int length = text.length();
+        if (length == 0) {
+            return new StyleSpansBuilder<Collection<String>>()
+                    .add(Collections.emptyList(), 0)
+                    .create();
+        }
+
+        List<Token> tokens = new LinkedList<>();
         int index = 0;
 
         while (index < length) {
@@ -154,7 +160,21 @@ public final class GroovySyntaxHighlighter {
     private static int consumeNumber(String text, int index) {
         while (index < text.length()) {
             char current = text.charAt(index);
-            if (Character.isDigit(current) || current == '.' || current == '_' || Character.isLetter(current)) {
+            if (Character.isDigit(current)
+                    || current == '.'
+                    || current == '_'
+                    || current == 'x'
+                    || current == 'X'
+                    || (current >= 'a' && current <= 'f')
+                    || (current >= 'A' && current <= 'F')
+                    || current == 'l'
+                    || current == 'L'
+                    || current == 'd'
+                    || current == 'D'
+                    || current == 'f'
+                    || current == 'F'
+                    || current == 'b'
+                    || current == 'B') {
                 index++;
                 continue;
             }

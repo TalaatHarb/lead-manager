@@ -1,166 +1,114 @@
 package com.talaatharb.leadmanager.graph;
 
-import java.beans.XMLDecoder;
-import java.beans.XMLEncoder;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.StringJoiner;
 
 public final class LeadFinderGraphSerializer {
+
+    private static final String HEADER = "LMGF1";
 
     private LeadFinderGraphSerializer() {
     }
 
     public static String serialize(LeadFinderGraph graph) {
-        GraphSnapshot snapshot = new GraphSnapshot();
+        StringBuilder builder = new StringBuilder(HEADER).append('\n');
         for (LeadFinderNode node : graph.getNodes()) {
-            NodeSnapshot nodeSnapshot = new NodeSnapshot();
-            nodeSnapshot.setId(node.getId());
-            nodeSnapshot.setLabel(node.getLabel());
-            nodeSnapshot.setType(node.getType().name());
-            nodeSnapshot.setX(node.getX());
-            nodeSnapshot.setY(node.getY());
-            nodeSnapshot.setProperties(new HashMap<>(node.getProperties()));
-            snapshot.getNodes().add(nodeSnapshot);
+            builder.append("NODE\t")
+                    .append(encode(node.getId())).append('\t')
+                    .append(encode(node.getLabel())).append('\t')
+                    .append(node.getType().name()).append('\t')
+                    .append(node.getX()).append('\t')
+                    .append(node.getY()).append('\t')
+                    .append(serializeProperties(node))
+                    .append('\n');
         }
-        graph.getEdges().forEach(edge -> {
-            EdgeSnapshot edgeSnapshot = new EdgeSnapshot();
-            edgeSnapshot.setFromId(graph.getGraph().getEdgeSource(edge).getId());
-            edgeSnapshot.setToId(graph.getGraph().getEdgeTarget(edge).getId());
-            snapshot.getEdges().add(edgeSnapshot);
-        });
-
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        try (XMLEncoder encoder = new XMLEncoder(outputStream)) {
-            encoder.writeObject(snapshot);
-            encoder.flush();
-        }
-        return outputStream.toString(StandardCharsets.UTF_8);
+        graph.getEdges().forEach(edge -> builder.append("EDGE\t")
+                .append(encode(graph.getGraph().getEdgeSource(edge).getId())).append('\t')
+                .append(encode(graph.getGraph().getEdgeTarget(edge).getId()))
+                .append('\n'));
+        return builder.toString();
     }
 
     public static LeadFinderGraph deserialize(String serializedGraph) {
-        try (XMLDecoder decoder = new XMLDecoder(
-                new ByteArrayInputStream(serializedGraph.getBytes(StandardCharsets.UTF_8)))) {
-            GraphSnapshot snapshot = (GraphSnapshot) decoder.readObject();
-            LeadFinderGraph graph = new LeadFinderGraph();
-            snapshot.getNodes().forEach(nodeSnapshot -> {
-                LeadFinderNode node = new LeadFinderNode(
-                        nodeSnapshot.getId(),
-                        nodeSnapshot.getLabel(),
-                        LeadFinderNode.NodeType.valueOf(nodeSnapshot.getType()));
-                node.setX(nodeSnapshot.getX());
-                node.setY(nodeSnapshot.getY());
-                if (nodeSnapshot.getProperties() != null) {
-                    node.getProperties().putAll(nodeSnapshot.getProperties());
-                }
-                graph.addNode(node);
-            });
-            snapshot.getEdges().forEach(edgeSnapshot ->
-                    graph.connect(edgeSnapshot.getFromId(), edgeSnapshot.getToId()));
-            return graph;
+        if (serializedGraph == null || serializedGraph.isBlank()) {
+            throw new IllegalArgumentException("Serialized graph must not be blank");
+        }
+
+        String[] lines = serializedGraph.split("\\R");
+        if (lines.length == 0 || !HEADER.equals(lines[0])) {
+            throw new IllegalArgumentException("Unsupported graph serialization format");
+        }
+
+        LeadFinderGraph graph = new LeadFinderGraph();
+        for (int i = 1; i < lines.length; i++) {
+            String line = lines[i];
+            if (line.isBlank()) {
+                continue;
+            }
+            String[] parts = line.split("\\t", -1);
+            if (parts.length == 0) {
+                continue;
+            }
+            switch (parts[0]) {
+                case "NODE" -> deserializeNode(graph, parts);
+                case "EDGE" -> deserializeEdge(graph, parts);
+                default -> throw new IllegalArgumentException("Unsupported graph record: " + parts[0]);
+            }
+        }
+        return graph;
+    }
+
+    private static void deserializeNode(LeadFinderGraph graph, String[] parts) {
+        if (parts.length != 7) {
+            throw new IllegalArgumentException("Malformed node record");
+        }
+
+        LeadFinderNode node = new LeadFinderNode(
+                decode(parts[1]),
+                decode(parts[2]),
+                LeadFinderNode.NodeType.valueOf(parts[3]));
+        node.setX(Double.parseDouble(parts[4]));
+        node.setY(Double.parseDouble(parts[5]));
+        deserializeProperties(node, parts[6]);
+        graph.addNode(node);
+    }
+
+    private static void deserializeEdge(LeadFinderGraph graph, String[] parts) {
+        if (parts.length != 3) {
+            throw new IllegalArgumentException("Malformed edge record");
+        }
+        graph.connect(decode(parts[1]), decode(parts[2]));
+    }
+
+    private static String serializeProperties(LeadFinderNode node) {
+        StringJoiner joiner = new StringJoiner(";");
+        node.getProperties().forEach((key, value) ->
+                joiner.add(encode(key) + "=" + encode(value)));
+        return joiner.toString();
+    }
+
+    private static void deserializeProperties(LeadFinderNode node, String serializedProperties) {
+        if (serializedProperties == null || serializedProperties.isBlank()) {
+            return;
+        }
+        for (String entry : serializedProperties.split(";")) {
+            if (entry.isBlank()) {
+                continue;
+            }
+            String[] keyValue = entry.split("=", 2);
+            if (keyValue.length == 2) {
+                node.setProperty(decode(keyValue[0]), decode(keyValue[1]));
+            }
         }
     }
 
-    public static class GraphSnapshot {
-        private List<NodeSnapshot> nodes = new ArrayList<>();
-        private List<EdgeSnapshot> edges = new ArrayList<>();
-
-        public List<NodeSnapshot> getNodes() {
-            return nodes;
-        }
-
-        public void setNodes(List<NodeSnapshot> nodes) {
-            this.nodes = nodes;
-        }
-
-        public List<EdgeSnapshot> getEdges() {
-            return edges;
-        }
-
-        public void setEdges(List<EdgeSnapshot> edges) {
-            this.edges = edges;
-        }
+    private static String encode(String value) {
+        return URLEncoder.encode(value == null ? "" : value, StandardCharsets.UTF_8);
     }
 
-    public static class NodeSnapshot {
-        private String id;
-        private String label;
-        private String type;
-        private double x;
-        private double y;
-        private Map<String, String> properties = new HashMap<>();
-
-        public String getId() {
-            return id;
-        }
-
-        public void setId(String id) {
-            this.id = id;
-        }
-
-        public String getLabel() {
-            return label;
-        }
-
-        public void setLabel(String label) {
-            this.label = label;
-        }
-
-        public String getType() {
-            return type;
-        }
-
-        public void setType(String type) {
-            this.type = type;
-        }
-
-        public double getX() {
-            return x;
-        }
-
-        public void setX(double x) {
-            this.x = x;
-        }
-
-        public double getY() {
-            return y;
-        }
-
-        public void setY(double y) {
-            this.y = y;
-        }
-
-        public Map<String, String> getProperties() {
-            return properties;
-        }
-
-        public void setProperties(Map<String, String> properties) {
-            this.properties = properties;
-        }
-    }
-
-    public static class EdgeSnapshot {
-        private String fromId;
-        private String toId;
-
-        public String getFromId() {
-            return fromId;
-        }
-
-        public void setFromId(String fromId) {
-            this.fromId = fromId;
-        }
-
-        public String getToId() {
-            return toId;
-        }
-
-        public void setToId(String toId) {
-            this.toId = toId;
-        }
+    private static String decode(String value) {
+        return URLDecoder.decode(value, StandardCharsets.UTF_8);
     }
 }

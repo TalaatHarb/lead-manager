@@ -10,7 +10,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 public class LeadFinderTracker implements AutoCloseable {
 
@@ -69,10 +68,7 @@ public class LeadFinderTracker implements AutoCloseable {
                                         java.util.function.Consumer<LeadFinderDefinition> updater) {
         Objects.requireNonNull(name, "name");
         Objects.requireNonNull(type, "type");
-        Optional<LeadFinderDefinition> existing = repository.findAll().stream()
-                .filter(definition -> definition.getType() == type)
-                .filter(definition -> name.equals(definition.getName()))
-                .findFirst();
+        var existing = repository.findByNameAndType(name, type);
 
         LeadFinderDefinition definition = existing.orElseGet(() -> new LeadFinderDefinition(name, type));
         definition.setName(name);

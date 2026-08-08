@@ -56,12 +56,12 @@ src/main/java/com/talaatharb/leadmanager/
 ├── tracking/LeadFinderTracker.java # Tracks Java, Groovy, and graph lead finders
 ├── graph/
 │   ├── LeadFinderGraph.java        # JGraphT-backed pipeline graph
-│   ├── LeadFinderGraphSerializer.java # XML serialization for graph lead finders
+│   ├── LeadFinderGraphSerializer.java # Compact text serialization for graph lead finders
 │   └── LeadFinderNode.java         # Graph node (SCRAPE/FILTER/ENRICH/SCRIPT/OUTPUT)
 └── ui/
     ├── controller/MainController.java
     └── view/
         ├── CodeEditorView.java     # RichTextFX editor pane
-        ├── ../GroovySyntaxHighlighter.java # Groovy editor highlighter
+├── ui/GroovySyntaxHighlighter.java # Groovy editor highlighter
         └── GraphEditorView.java    # Node-graph editor pane
 ```
