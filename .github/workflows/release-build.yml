@@ -1,0 +1,73 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Build with Maven (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          MAVEN_OPTS="--add-opens java.base/java.lang=ALL-UNNAMED" mvn clean package -B -DskipTests
+
+      - name: Build with Maven (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          $env:MAVEN_OPTS="--add-opens java.base/java.lang=ALL-UNNAMED"
+          mvn clean package -B -DskipTests
+        shell: pwsh
+
+      - name: Rename JAR with tag version
+        if: runner.os != 'Windows'
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          VERSION="${TAG_NAME#v}"
+          ORIGINAL_JAR=$(ls target/lead-manager-*.jar | head -n 1)
+          RENAMED_JAR="lead-manager-${VERSION}-${{ runner.os }}.jar"
+          cp "$ORIGINAL_JAR" "target/$RENAMED_JAR"
+          echo "RENAMED_JAR_PATH=target/$RENAMED_JAR" >> "$GITHUB_ENV"
+        shell: bash
+
+      - name: Rename JAR with tag version (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          $tagName = "${env:GITHUB_REF}" -replace '^refs/tags/', ''
+          $version = $tagName -replace '^v', ''
+          $originalJar = Get-ChildItem -Path target -Filter 'lead-manager-*.jar' | Select-Object -First 1
+          $renamedJar = "lead-manager-$version-${{ runner.os }}.jar"
+          Copy-Item $originalJar.FullName (Join-Path target $renamedJar)
+          "RENAMED_JAR_PATH=target/$renamedJar" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+        shell: pwsh
+
+      - name: Upload JAR to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          body: |
+            This release was automatically generated from tag `${{ github.ref_name }}`.
+            - Built on `${{ runner.os }}`
+            - Includes the application JAR file.
+          files: ${{ env.RENAMED_JAR_PATH }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
