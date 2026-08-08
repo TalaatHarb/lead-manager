@@ -8,9 +8,10 @@ A JavaFX desktop application for managing sales leads.
 |---------|-------------|
 | **CRUD** | Create, Read, Update, Delete sales leads stored in a MapDB local file |
 | **Web Scraping** | Pluggable `LeadFinder` interface; built-in scrapers for Hacker News Jobs, GitHub Trending, LinkedIn Jobs, Y Combinator Jobs, Product Hunt Today, and Wellfound (jsoup) |
-| **Groovy Scripting** | Write and run custom lead-finder scripts in the built-in code editor |
-| **Code Editor** | RichTextFX `CodeArea` with line numbers and Groovy syntax support |
-| **Graph Editor** | Visual node-graph builder for lead-finder pipelines (JGraphT model, JavaFX canvas renderer) |
+| **Groovy Scripting** | Write, run, highlight, and track custom lead-finder scripts in the built-in code editor |
+| **Code Editor** | RichTextFX `CodeArea` with line numbers and Groovy syntax highlighting |
+| **Graph Editor** | Visual node-graph builder for lead-finder pipelines with graph serialization and tracking support |
+| **Lead Finder Tracking** | Persist Java, Groovy, and graph-based lead finder definitions alongside sales leads |
 
 ## Tech Stack
 
@@ -44,6 +45,7 @@ src/main/java/com/talaatharb/leadmanager/
 ├── LeadManagerApplication.java     # JavaFX entry point
 ├── entity/SalesLead.java           # Domain entity
 ├── repository/LeadRepository.java  # MapDB CRUD
+├── repository/LeadFinderRepository.java # Persisted lead finder definitions
 ├── scraper/
 │   ├── LeadFinder.java             # Interface for all scrapers
 │   ├── HackerNewsLeadFinder.java   # jsoup scraper
@@ -51,12 +53,15 @@ src/main/java/com/talaatharb/leadmanager/
 ├── scripting/
 │   ├── GroovyScriptRunner.java     # JSR-223 Groovy engine
 │   └── GroovyLeadFinder.java       # Script-backed LeadFinder
+├── tracking/LeadFinderTracker.java # Tracks Java, Groovy, and graph lead finders
 ├── graph/
 │   ├── LeadFinderGraph.java        # JGraphT-backed pipeline graph
+│   ├── LeadFinderGraphSerializer.java # Compact text serialization for graph lead finders
 │   └── LeadFinderNode.java         # Graph node (SCRAPE/FILTER/ENRICH/SCRIPT/OUTPUT)
 └── ui/
     ├── controller/MainController.java
     └── view/
         ├── CodeEditorView.java     # RichTextFX editor pane
+├── ui/GroovySyntaxHighlighter.java # Groovy editor highlighter
         └── GraphEditorView.java    # Node-graph editor pane
 ```

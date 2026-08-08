@@ -15,7 +15,7 @@ import java.util.Set;
  * <p>
  * Nodes model processing steps (scrape, filter, enrich, output).
  * Edges define the data-flow order between steps.
- * The graph is backed by JGraphT and can be serialised to/from JSON.
+ * The graph is backed by JGraphT and can be serialised to/from a compact text format.
  */
 public class LeadFinderGraph {
 
@@ -80,5 +80,13 @@ public class LeadFinderGraph {
 
     public DefaultDirectedGraph<LeadFinderNode, DefaultEdge> getGraph() {
         return graph;
+    }
+
+    public String serialize() {
+        return LeadFinderGraphSerializer.serialize(this);
+    }
+
+    public static LeadFinderGraph deserialize(String serializedGraph) {
+        return LeadFinderGraphSerializer.deserialize(serializedGraph);
     }
 }

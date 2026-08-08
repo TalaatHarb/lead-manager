@@ -3,12 +3,12 @@ package com.talaatharb.leadmanager.ui.view;
 import com.talaatharb.leadmanager.graph.LeadFinderGraph;
 import com.talaatharb.leadmanager.graph.LeadFinderNode;
 import com.talaatharb.leadmanager.graph.LeadFinderNode.NodeType;
+import com.talaatharb.leadmanager.tracking.LeadFinderTracker;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
-import javafx.scene.shape.Line;
 import javafx.scene.text.Text;
 import lombok.Getter;
 import org.slf4j.Logger;
@@ -32,33 +32,44 @@ public class GraphEditorView extends BorderPane {
     @Getter
     private final LeadFinderGraph graphModel = new LeadFinderGraph();
     private final Pane canvas = new Pane();
+    private final LeadFinderTracker tracker;
+    private final Label statusLabel = new Label("Ready");
 
-    public GraphEditorView() {
-        // --- Toolbar ---
+    public GraphEditorView(LeadFinderTracker tracker) {
+        this.tracker = tracker;
+
         ComboBox<NodeType> nodeTypeCombo = new ComboBox<>();
         nodeTypeCombo.getItems().addAll(NodeType.values());
         nodeTypeCombo.setValue(NodeType.SCRAPE);
 
         TextField labelField = new TextField("New Node");
+        TextField finderNameField = new TextField("Custom Graph Lead Finder");
+        finderNameField.setPrefColumnCount(22);
 
         Button addNodeBtn = new Button("Add Node");
         addNodeBtn.setOnAction(e -> addNodeToCanvas(labelField.getText(), nodeTypeCombo.getValue()));
+
+        Button trackBtn = new Button("Track Graph");
+        trackBtn.setOnAction(e -> trackGraph(finderNameField.getText()));
 
         Button clearBtn = new Button("Clear");
         clearBtn.setOnAction(e -> clearCanvas());
 
         HBox toolbar = new HBox(8, new Label("Type:"), nodeTypeCombo,
-                new Label("Label:"), labelField, addNodeBtn, clearBtn);
+                new Label("Label:"), labelField,
+                new Label("Name:"), finderNameField,
+                addNodeBtn, trackBtn, clearBtn);
         toolbar.setPadding(new Insets(6, 8, 6, 8));
 
         canvas.setStyle("-fx-background-color: #f4f4f4;");
         ScrollPane scroll = new ScrollPane(canvas);
         scroll.setPannable(true);
 
+        BorderPane.setMargin(statusLabel, new Insets(6, 8, 6, 8));
         setTop(toolbar);
         setCenter(scroll);
+        setBottom(statusLabel);
 
-        // Add a couple of starter nodes
         addStarterNodes();
     }
 
@@ -80,7 +91,6 @@ public class GraphEditorView extends BorderPane {
         node.setY(y);
         graphModel.addNode(node);
 
-        // Visual representation
         Circle circle = new Circle(30, nodeColor(type));
         circle.setStroke(Color.DARKGRAY);
         circle.setStrokeWidth(1.5);
@@ -92,7 +102,7 @@ public class GraphEditorView extends BorderPane {
         nodePane.setLayoutX(x - 30);
         nodePane.setLayoutY(y - 30);
 
-        enableDrag(nodePane);
+        enableDrag(nodePane, node);
 
         Tooltip.install(nodePane, new Tooltip(type.name() + ": " + label));
         canvas.getChildren().add(nodePane);
@@ -101,24 +111,33 @@ public class GraphEditorView extends BorderPane {
 
     private void clearCanvas() {
         canvas.getChildren().clear();
-        // Collect IDs first to avoid ConcurrentModificationException on the live vertex set
         List<String> ids = graphModel.getNodes().stream()
                 .map(LeadFinderNode::getId)
                 .toList();
         ids.forEach(graphModel::removeNode);
+        statusLabel.setText("Graph cleared");
         log.debug("Canvas cleared");
     }
 
+    private void trackGraph(String name) {
+        tracker.trackGraph(name, graphModel);
+        statusLabel.setText("Tracked graph lead finder: " + name);
+    }
+
     /** Make a node pane draggable on the canvas. */
-    private void enableDrag(javafx.scene.layout.StackPane pane) {
+    private void enableDrag(StackPane pane, LeadFinderNode node) {
         final double[] dragDelta = new double[2];
         pane.setOnMousePressed(e -> {
             dragDelta[0] = pane.getLayoutX() - e.getSceneX();
             dragDelta[1] = pane.getLayoutY() - e.getSceneY();
         });
         pane.setOnMouseDragged(e -> {
-            pane.setLayoutX(e.getSceneX() + dragDelta[0]);
-            pane.setLayoutY(e.getSceneY() + dragDelta[1]);
+            double layoutX = e.getSceneX() + dragDelta[0];
+            double layoutY = e.getSceneY() + dragDelta[1];
+            pane.setLayoutX(layoutX);
+            pane.setLayoutY(layoutY);
+            node.setX(layoutX + 30);
+            node.setY(layoutY + 30);
         });
     }
 

@@ -4,6 +4,7 @@ module com.talaatharb.leadmanager {
     requires javafx.fxml;
     requires javafx.web;
     requires java.scripting;
+    requires java.desktop;
 
     requires org.fxmisc.richtext;
     requires org.fxmisc.flowless;
@@ -30,5 +31,7 @@ module com.talaatharb.leadmanager {
     exports com.talaatharb.leadmanager.scripting;
     exports com.talaatharb.leadmanager.graph;
     exports com.talaatharb.leadmanager.ui.controller;
+    exports com.talaatharb.leadmanager.ui;
+    exports com.talaatharb.leadmanager.tracking;
     exports com.talaatharb.leadmanager.ui.view;
 }
