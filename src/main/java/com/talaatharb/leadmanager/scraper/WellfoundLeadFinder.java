@@ -126,18 +126,16 @@ public class WellfoundLeadFinder implements LeadFinder {
 
             Document doc = conn.get();
 
-            // TODO: once headless rendering is available, parse real job cards here.
-            // Example selector to try once SPA is rendered:
-            //   Elements cards = doc.select("div[data-test=StartupResult]");
+            // Selector targets the SPA-rendered job cards.
+            // Returns empty for static responses until headless-browser support is added.
             Elements cards = doc.select("div[data-test=StartupResult]");
 
             List<SalesLead> leads = new ArrayList<>();
             for (Element card : cards) {
-                String company = card.selectFirst("a[data-test=startup-link]") != null
-                        ? card.selectFirst("a[data-test=startup-link]").text().trim()
-                        : "";
-                String website = card.selectFirst("a[data-test=startup-link]") != null
-                        ? "https://wellfound.com" + card.selectFirst("a[data-test=startup-link]").attr("href")
+                Element linkEl = card.selectFirst("a[data-test=startup-link]");
+                String company = linkEl != null ? linkEl.text().trim() : "";
+                String website = linkEl != null
+                        ? "https://wellfound.com" + linkEl.attr("href")
                         : "";
 
                 if (company.isBlank()) {

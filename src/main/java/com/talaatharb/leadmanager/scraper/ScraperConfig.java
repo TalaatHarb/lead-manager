@@ -67,8 +67,9 @@ public final class ScraperConfig {
 
     /** {@code true} when credentials or session cookies have been supplied. */
     public boolean isAuthenticated() {
-        return (username != null && !username.isBlank())
-                || !cookies.isEmpty();
+        return (!cookies.isEmpty())
+                || (username != null && !username.isBlank()
+                        && password != null && !password.isBlank());
     }
 
     /** Create a default guest-only configuration. */

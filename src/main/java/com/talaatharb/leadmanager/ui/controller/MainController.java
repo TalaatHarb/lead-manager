@@ -182,15 +182,21 @@ public class MainController implements Initializable {
 
         taScraperLog.appendText("Running: " + finder.getName() + " ...\n");
         new Thread(() -> {
-            List<SalesLead> found = finder.findLatestHotLeads(config);
-            javafx.application.Platform.runLater(() -> {
-                found.forEach(lead -> {
-                    repository.save(lead);
-                    leadData.add(lead);
-                    taScraperLog.appendText("  + " + lead.getName() + " [" + lead.getWebsite() + "]\n");
+            try {
+                List<SalesLead> found = finder.findLatestHotLeads(config);
+                javafx.application.Platform.runLater(() -> {
+                    found.forEach(lead -> {
+                        repository.save(lead);
+                        leadData.add(lead);
+                        taScraperLog.appendText("  + " + lead.getName() + " [" + lead.getWebsite() + "]\n");
+                    });
+                    taScraperLog.appendText("Done. Found " + found.size() + " leads.\n");
                 });
-                taScraperLog.appendText("Done. Found " + found.size() + " leads.\n");
-            });
+            } catch (Exception ex) {
+                log.error("Scraper '{}' threw an unexpected exception", finder.getName(), ex);
+                javafx.application.Platform.runLater(() ->
+                        taScraperLog.appendText("ERROR: " + ex.getMessage() + "\n"));
+            }
         }, "scraper-thread").start();
     }
 

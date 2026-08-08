@@ -7,7 +7,7 @@ A JavaFX desktop application for managing sales leads.
 | Feature | Description |
 |---------|-------------|
 | **CRUD** | Create, Read, Update, Delete sales leads stored in a MapDB local file |
-| **Web Scraping** | Pluggable `LeadFinder` interface; built-in scrapers for Hacker News Jobs & GitHub Trending (jsoup) |
+| **Web Scraping** | Pluggable `LeadFinder` interface; built-in scrapers for Hacker News Jobs, GitHub Trending, LinkedIn Jobs, Y Combinator Jobs, Product Hunt Today, and Wellfound (jsoup) |
 | **Groovy Scripting** | Write and run custom lead-finder scripts in the built-in code editor |
 | **Code Editor** | RichTextFX `CodeArea` with line numbers and Groovy syntax support |
 | **Graph Editor** | Visual node-graph builder for lead-finder pipelines (JGraphT model, JavaFX canvas renderer) |

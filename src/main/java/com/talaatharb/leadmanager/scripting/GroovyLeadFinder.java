@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * A {@link LeadFinder} that delegates to a Groovy script for its logic.
  * <p>
- * The script is evaluated each time {@link #findLatestHotLeads()} is called,
+ * The script is evaluated each time {@link #findLatestHotLeads(ScraperConfig)} is called,
  * so changes to the script file are picked up immediately without restarting.
  */
 public class GroovyLeadFinder implements LeadFinder {
