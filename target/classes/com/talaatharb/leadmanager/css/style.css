@@ -1,0 +1,30 @@
+/* Lead Manager – main stylesheet */
+
+.root {
+    -fx-font-family: "Segoe UI", Helvetica, Arial, sans-serif;
+    -fx-font-size: 13px;
+}
+
+.table-view .column-header {
+    -fx-background-color: #3c7ab6;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: #cde3f7;
+    -fx-text-fill: black;
+}
+
+.button {
+    -fx-background-radius: 4;
+    -fx-cursor: hand;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab:selected {
+    -fx-background-color: #3c7ab6;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab:selected .tab-label {
+    -fx-text-fill: white;
+}
