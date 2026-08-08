@@ -2,7 +2,10 @@ name: Build project
 
 on:
   push:
-    branches: [master, main]
+    branches: [master]
+
+permissions:
+  contents: read
 
 jobs:
   build-project:
