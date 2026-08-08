@@ -5,6 +5,11 @@ import com.talaatharb.leadmanager.repository.LeadRepository;
 import com.talaatharb.leadmanager.scraper.GithubTrendingLeadFinder;
 import com.talaatharb.leadmanager.scraper.HackerNewsLeadFinder;
 import com.talaatharb.leadmanager.scraper.LeadFinder;
+import com.talaatharb.leadmanager.scraper.LinkedInLeadFinder;
+import com.talaatharb.leadmanager.scraper.ProductHuntLeadFinder;
+import com.talaatharb.leadmanager.scraper.ScraperConfig;
+import com.talaatharb.leadmanager.scraper.WellfoundLeadFinder;
+import com.talaatharb.leadmanager.scraper.YCombinatorLeadFinder;
 import com.talaatharb.leadmanager.scripting.GroovyScriptRunner;
 import com.talaatharb.leadmanager.ui.view.CodeEditorView;
 import com.talaatharb.leadmanager.ui.view.GraphEditorView;
@@ -99,7 +104,12 @@ public class MainController implements Initializable {
 
     private void setupScraperCombo() {
         cbScraper.setItems(FXCollections.observableArrayList(
-                "Hacker News Jobs", "GitHub Trending"));
+                "Hacker News Jobs",
+                "GitHub Trending",
+                "LinkedIn Jobs",
+                "Y Combinator Jobs",
+                "Product Hunt Today",
+                "Wellfound (AngelList)"));
         cbScraper.setValue("Hacker News Jobs");
     }
 
@@ -160,13 +170,19 @@ public class MainController implements Initializable {
     private void handleRunScraper() {
         String scraperName = cbScraper.getValue();
         LeadFinder finder = switch (scraperName) {
-            case "GitHub Trending" -> new GithubTrendingLeadFinder();
-            default -> new HackerNewsLeadFinder();
+            case "GitHub Trending"     -> new GithubTrendingLeadFinder();
+            case "LinkedIn Jobs"       -> new LinkedInLeadFinder();
+            case "Y Combinator Jobs"   -> new YCombinatorLeadFinder();
+            case "Product Hunt Today"  -> new ProductHuntLeadFinder();
+            case "Wellfound (AngelList)" -> new WellfoundLeadFinder();
+            default                    -> new HackerNewsLeadFinder();
         };
+
+        ScraperConfig config = ScraperConfig.defaultConfig();
 
         taScraperLog.appendText("Running: " + finder.getName() + " ...\n");
         new Thread(() -> {
-            List<SalesLead> found = finder.findLatestHotLeads();
+            List<SalesLead> found = finder.findLatestHotLeads(config);
             javafx.application.Platform.runLater(() -> {
                 found.forEach(lead -> {
                     repository.save(lead);

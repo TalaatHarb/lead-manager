@@ -22,7 +22,6 @@ public class HackerNewsLeadFinder implements LeadFinder {
 
     private static final Logger log = LoggerFactory.getLogger(HackerNewsLeadFinder.class);
     private static final String HN_JOBS_URL = "https://news.ycombinator.com/jobs";
-    private static final int TIMEOUT_MS = 10_000;
 
     @Override
     public String getName() {
@@ -30,13 +29,15 @@ public class HackerNewsLeadFinder implements LeadFinder {
     }
 
     @Override
-    public List<SalesLead> findLatestHotLeads() {
+    public List<SalesLead> findLatestHotLeads(ScraperConfig config) {
         List<SalesLead> leads = new ArrayList<>();
         try {
-            Document doc = Jsoup.connect(HN_JOBS_URL)
-                    .userAgent("Mozilla/5.0 (compatible; LeadManager/1.0)")
-                    .timeout(TIMEOUT_MS)
-                    .get();
+            org.jsoup.Connection conn = Jsoup.connect(HN_JOBS_URL)
+                    .userAgent(config.getUserAgent())
+                    .timeout(config.getTimeoutMs());
+            config.getCookies().forEach(conn::cookie);
+
+            Document doc = conn.get();
 
             Elements jobItems = doc.select("tr.athing");
             for (Element item : jobItems) {

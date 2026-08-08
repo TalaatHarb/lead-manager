@@ -21,7 +21,6 @@ public class GithubTrendingLeadFinder implements LeadFinder {
 
     private static final Logger log = LoggerFactory.getLogger(GithubTrendingLeadFinder.class);
     private static final String GITHUB_TRENDING_URL = "https://github.com/trending";
-    private static final int TIMEOUT_MS = 10_000;
 
     @Override
     public String getName() {
@@ -29,13 +28,15 @@ public class GithubTrendingLeadFinder implements LeadFinder {
     }
 
     @Override
-    public List<SalesLead> findLatestHotLeads() {
+    public List<SalesLead> findLatestHotLeads(ScraperConfig config) {
         List<SalesLead> leads = new ArrayList<>();
         try {
-            Document doc = Jsoup.connect(GITHUB_TRENDING_URL)
-                    .userAgent("Mozilla/5.0 (compatible; LeadManager/1.0)")
-                    .timeout(TIMEOUT_MS)
-                    .get();
+            org.jsoup.Connection conn = Jsoup.connect(GITHUB_TRENDING_URL)
+                    .userAgent(config.getUserAgent())
+                    .timeout(config.getTimeoutMs());
+            config.getCookies().forEach(conn::cookie);
+
+            Document doc = conn.get();
 
             Elements repos = doc.select("article.Box-row");
             for (Element repo : repos) {

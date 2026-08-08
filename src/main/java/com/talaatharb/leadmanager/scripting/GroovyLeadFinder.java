@@ -2,6 +2,7 @@ package com.talaatharb.leadmanager.scripting;
 
 import com.talaatharb.leadmanager.entity.SalesLead;
 import com.talaatharb.leadmanager.scraper.LeadFinder;
+import com.talaatharb.leadmanager.scraper.ScraperConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +42,7 @@ public class GroovyLeadFinder implements LeadFinder {
     }
 
     @Override
-    public List<SalesLead> findLatestHotLeads() {
+    public List<SalesLead> findLatestHotLeads(ScraperConfig config) {
         log.info("Running Groovy lead finder: {}", name);
         return runner.executeLeadFinderScript(script);
     }
