@@ -3,15 +3,16 @@ module com.talaatharb.leadmanager {
     requires javafx.controls;
     requires javafx.fxml;
     requires javafx.web;
+    requires java.scripting;
 
     requires org.fxmisc.richtext;
     requires org.fxmisc.flowless;
 
-    requires org.mapdb;
+    requires mapdb;
     requires org.jsoup;
 
-    requires groovy;
-    requires groovy.jsr223;
+    requires org.apache.groovy;
+    requires org.apache.groovy.jsr223;
 
     requires org.jgrapht.core;
     requires org.jgrapht.io;

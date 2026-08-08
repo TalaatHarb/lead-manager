@@ -1,0 +1,4 @@
+--patch-module
+com.talaatharb.leadmanager=_
+--add-reads
+com.talaatharb.leadmanager=ALL-UNNAMED
