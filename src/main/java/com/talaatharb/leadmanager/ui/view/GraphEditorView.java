@@ -10,6 +10,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.scene.text.Text;
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +29,7 @@ public class GraphEditorView extends BorderPane {
 
     private static final Logger log = LoggerFactory.getLogger(GraphEditorView.class);
 
+    @Getter
     private final LeadFinderGraph graphModel = new LeadFinderGraph();
     private final Pane canvas = new Pane();
 
@@ -128,9 +130,5 @@ public class GraphEditorView extends BorderPane {
             case SCRIPT -> Color.MEDIUMPURPLE;
             case OUTPUT -> Color.TOMATO;
         };
-    }
-
-    public LeadFinderGraph getGraphModel() {
-        return graphModel;
     }
 }

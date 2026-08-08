@@ -29,6 +29,7 @@
         <logback.version>1.5.7</logback.version>
         <junit.version>5.11.0</junit.version>
         <mockito.version>5.12.0</mockito.version>
+        <lombok.version>1.18.38</lombok.version>
 
         <!-- Plugin versions -->
         <javafx.maven.plugin.version>0.0.8</javafx.maven.plugin.version>
@@ -111,6 +112,13 @@
             <version>${logback.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Testing -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -134,6 +142,13 @@
                 <version>${maven.compiler.plugin.version}</version>
                 <configuration>
                     <release>${java.version}</release>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
 

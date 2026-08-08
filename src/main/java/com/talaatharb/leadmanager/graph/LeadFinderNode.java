@@ -1,5 +1,8 @@
 package com.talaatharb.leadmanager.graph;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -12,6 +15,8 @@ import java.util.UUID;
  * (e.g. SCRAPE, FILTER, ENRICH, OUTPUT) and a map of configuration
  * properties specific to that type.
  */
+@Getter
+@Setter
 public class LeadFinderNode implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -32,23 +37,8 @@ public class LeadFinderNode implements Serializable {
         this.properties = new HashMap<>();
     }
 
-    public String getId() { return id; }
-
-    public String getLabel() { return label; }
-    public void setLabel(String label) { this.label = label; }
-
-    public NodeType getType() { return type; }
-    public void setType(NodeType type) { this.type = type; }
-
-    public Map<String, String> getProperties() { return properties; }
     public void setProperty(String key, String value) { properties.put(key, value); }
     public String getProperty(String key) { return properties.get(key); }
-
-    public double getX() { return x; }
-    public void setX(double x) { this.x = x; }
-
-    public double getY() { return y; }
-    public void setY(double y) { this.y = y; }
 
     @Override
     public String toString() {

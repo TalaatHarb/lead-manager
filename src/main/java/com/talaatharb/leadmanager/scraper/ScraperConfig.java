@@ -1,5 +1,7 @@
 package com.talaatharb.leadmanager.scraper;
 
+import lombok.Getter;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,6 +25,7 @@ import java.util.Map;
  *         .build();
  * }</pre>
  */
+@Getter
 public final class ScraperConfig {
 
     /** Default browser-like user-agent string used when none is specified. */
@@ -54,16 +57,6 @@ public final class ScraperConfig {
         this.proxyHost = b.proxyHost;
         this.proxyPort = b.proxyPort;
     }
-
-    // ---- Accessors ----
-
-    public String getUserAgent()           { return userAgent; }
-    public int    getTimeoutMs()           { return timeoutMs; }
-    public String getUsername()            { return username; }
-    public String getPassword()            { return password; }
-    public Map<String, String> getCookies(){ return cookies; }
-    public String getProxyHost()           { return proxyHost; }
-    public int    getProxyPort()           { return proxyPort; }
 
     /** {@code true} when credentials or session cookies have been supplied. */
     public boolean isAuthenticated() {

@@ -1,5 +1,8 @@
 package com.talaatharb.leadmanager.entity;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -7,6 +10,8 @@ import java.util.UUID;
 /**
  * Represents a sales lead entity persisted in MapDB.
  */
+@Getter
+@Setter
 public class SalesLead implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -36,41 +41,6 @@ public class SalesLead implements Serializable {
         this.company = company;
         this.email = email;
     }
-
-    // --- Getters and Setters ---
-
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-
-    public String getCompany() { return company; }
-    public void setCompany(String company) { this.company = company; }
-
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-
-    public String getPhone() { return phone; }
-    public void setPhone(String phone) { this.phone = phone; }
-
-    public String getWebsite() { return website; }
-    public void setWebsite(String website) { this.website = website; }
-
-    public String getSource() { return source; }
-    public void setSource(String source) { this.source = source; }
-
-    public LeadStatus getStatus() { return status; }
-    public void setStatus(LeadStatus status) { this.status = status; }
-
-    public String getNotes() { return notes; }
-    public void setNotes(String notes) { this.notes = notes; }
-
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 
     @Override
     public String toString() {

@@ -1,4 +1,5 @@
 module com.talaatharb.leadmanager {
+    requires static lombok;
     requires javafx.controls;
     requires javafx.fxml;
     requires javafx.web;
