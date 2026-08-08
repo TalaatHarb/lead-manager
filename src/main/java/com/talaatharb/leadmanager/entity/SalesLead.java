@@ -1,5 +1,6 @@
 package com.talaatharb.leadmanager.entity;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -16,6 +17,7 @@ public class SalesLead implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    @Setter(AccessLevel.NONE)
     private String id;
     private String name;
     private String company;
