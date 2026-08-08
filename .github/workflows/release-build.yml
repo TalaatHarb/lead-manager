@@ -1,0 +1,96 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Build with Maven (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          MAVEN_OPTS="--add-opens java.base/java.lang=ALL-UNNAMED" mvn verify -B -Djava.awt.headless=true -Dtestfx.robot=glass -Dtestfx.headless=true -Dprism.order=sw -Dprism.text=t2k -Dglass.platform=Monocle -Dmonocle.platform=Headless
+
+      - name: Build with Maven (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          $env:MAVEN_OPTS="--add-opens java.base/java.lang=ALL-UNNAMED"
+          mvn verify -B -Djava.awt.headless=true -Dtestfx.robot=glass -Dtestfx.headless=true -Dprism.order=sw -Dprism.text=t2k -Dglass.platform=Monocle -Dmonocle.platform=Headless
+        shell: pwsh
+
+      - name: Rename JAR with tag version
+        if: runner.os != 'Windows'
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          VERSION="${TAG_NAME#v}"
+          ORIGINAL_JAR=$(find target -maxdepth 1 -type f -name 'lead-manager-*.jar' ! -name '*-Linux.jar' ! -name '*-Windows.jar' ! -name '*-macOS.jar' | head -n 1)
+          if [ -z "$ORIGINAL_JAR" ]; then
+            echo "No packaged JAR found in target/. Ensure Maven produced a JAR artifact."
+            exit 1
+          fi
+          RENAMED_JAR="lead-manager-${VERSION}-${{ runner.os }}.jar"
+          cp "$ORIGINAL_JAR" "target/$RENAMED_JAR"
+        shell: bash
+
+      - name: Rename JAR with tag version (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          $tagName = "${env:GITHUB_REF}" -replace '^refs/tags/', ''
+          $version = $tagName -replace '^v', ''
+          $originalJar = Get-ChildItem -Path target -Filter 'lead-manager-*.jar' | Where-Object { $_.Name -notmatch '-(Linux|Windows|macOS)\.jar$' } | Select-Object -First 1
+          if (-not $originalJar) {
+            throw "No packaged JAR found in target/. Ensure Maven produced a JAR artifact."
+          }
+          $renamedJar = "lead-manager-$version-${{ runner.os }}.jar"
+          Copy-Item $originalJar.FullName (Join-Path target $renamedJar)
+        shell: pwsh
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lead-manager-${{ runner.os }}
+          path: target/lead-manager-*-${{ runner.os }}.jar
+
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: write
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: lead-manager-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Upload JARs to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          body: |
+            This release was automatically generated from tag `${{ github.ref_name }}`.
+            - Includes Linux, Windows, and macOS JAR builds.
+          files: release-assets/*.jar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
