@@ -2,7 +2,9 @@ package com.talaatharb.leadmanager.ui.view;
 
 import com.talaatharb.leadmanager.scripting.GroovyScriptRunner;
 import com.talaatharb.leadmanager.tracking.LeadFinderTracker;
+import com.talaatharb.leadmanager.service.BackgroundTaskService;
 import com.talaatharb.leadmanager.ui.GroovySyntaxHighlighter;
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -32,10 +34,13 @@ public class CodeEditorView extends BorderPane {
     private final TextArea outputArea;
     private final GroovyScriptRunner scriptRunner;
     private final LeadFinderTracker tracker;
+    private final BackgroundTaskService taskService;
 
-    public CodeEditorView(GroovyScriptRunner scriptRunner, LeadFinderTracker tracker) {
+    public CodeEditorView(GroovyScriptRunner scriptRunner, LeadFinderTracker tracker,
+                          BackgroundTaskService taskService) {
         this.scriptRunner = scriptRunner;
         this.tracker = tracker;
+        this.taskService = taskService;
 
         TextField finderNameField = new TextField("Custom Groovy Lead Finder");
         finderNameField.setPrefColumnCount(24);
@@ -72,13 +77,20 @@ public class CodeEditorView extends BorderPane {
 
     private void runScript() {
         String code = codeArea.getText();
-        try {
-            Object result = scriptRunner.execute(code, Collections.emptyMap());
-            outputArea.appendText("Result: " + result + "\n");
-        } catch (ScriptException ex) {
+        Task<Object> scriptTask = new Task<>() {
+            @Override
+            protected Object call() throws ScriptException {
+                return scriptRunner.execute(code, Collections.emptyMap());
+            }
+        };
+        scriptTask.setOnSucceeded(e ->
+                outputArea.appendText("Result: " + scriptTask.getValue() + "\n"));
+        scriptTask.setOnFailed(e -> {
+            Throwable ex = scriptTask.getException();
             log.error("Script execution error", ex);
-            outputArea.appendText("ERROR: " + ex.getMessage() + "\n");
-        }
+            outputArea.appendText("ERROR: " + (ex != null ? ex.getMessage() : "unknown error") + "\n");
+        });
+        taskService.submit(scriptTask);
     }
 
     private void trackScript(String name) {

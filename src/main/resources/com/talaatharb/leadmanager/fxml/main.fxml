@@ -99,6 +99,8 @@
                         <Label text="Scraper:"/>
                         <ComboBox fx:id="cbScraper" prefWidth="200"/>
                         <Button text="Run" onAction="#handleRunScraper"/>
+                        <Button fx:id="btnCancelScraper" text="Cancel" onAction="#handleCancelScraper" disable="true"/>
+                        <ProgressIndicator fx:id="scraperProgress" prefWidth="24" prefHeight="24" visible="false"/>
                     </HBox>
                     <TextArea fx:id="taScraperLog" VBox.vgrow="ALWAYS" editable="false"
                               wrapText="true" prefRowCount="20"
