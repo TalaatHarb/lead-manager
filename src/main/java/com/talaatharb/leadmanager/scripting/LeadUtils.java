@@ -22,6 +22,7 @@ public final class LeadUtils {
      * <p>
      * Duplicate detection uses normalized email first; when email is missing,
      * it falls back to a normalized identity tuple (name, company, website, phone).
+     * All tuple segments must match to be considered duplicates.
      *
      * @param leads input leads
      * @return de-duplicated leads

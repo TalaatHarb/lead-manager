@@ -52,6 +52,19 @@ class LeadUtilsTest {
     }
 
     @Test
+    void deduplicateKeepsDistinctLeadsWhenOnePhoneIsMissing() {
+        SalesLead first = new SalesLead("Alex", "Beta", null);
+        first.setWebsite("https://beta.example");
+        first.setPhone("+1-111");
+        SalesLead second = new SalesLead("Alex", "Beta", null);
+        second.setWebsite("https://beta.example");
+
+        List<SalesLead> result = LeadUtils.deduplicate(List.of(first, second));
+
+        assertEquals(2, result.size());
+    }
+
+    @Test
     void deduplicateFallsBackToIdForCompletelyEmptyLeads() {
         SalesLead first = new SalesLead();
         SalesLead second = new SalesLead();
