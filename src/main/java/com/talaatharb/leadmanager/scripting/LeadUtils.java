@@ -52,10 +52,18 @@ public final class LeadUtils {
         String website = normalize(lead.getWebsite());
         String phone = normalize(lead.getPhone());
         if (!name.isEmpty() || !company.isEmpty() || !website.isEmpty() || !phone.isEmpty()) {
-            return "identity:" + name + "|" + company + "|" + website + "|" + phone;
+            return "identity:"
+                    + encode(name) + "|"
+                    + encode(company) + "|"
+                    + encode(website) + "|"
+                    + encode(phone);
         }
 
         return "id:" + lead.getId();
+    }
+
+    private static String encode(String value) {
+        return value.length() + ":" + value;
     }
 
     private static String normalize(String value) {

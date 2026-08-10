@@ -38,4 +38,26 @@ class LeadUtilsTest {
     void deduplicateReturnsEmptyForNullInput() {
         assertTrue(LeadUtils.deduplicate(null).isEmpty());
     }
+
+    @Test
+    void deduplicateKeepsDistinctLeadsWhenIdentityDiffersByPhone() {
+        SalesLead first = new SalesLead("Alex", "Beta", null);
+        first.setPhone("+1-111");
+        SalesLead second = new SalesLead("Alex", "Beta", null);
+        second.setPhone("+1-222");
+
+        List<SalesLead> result = LeadUtils.deduplicate(List.of(first, second));
+
+        assertEquals(2, result.size());
+    }
+
+    @Test
+    void deduplicateFallsBackToIdForCompletelyEmptyLeads() {
+        SalesLead first = new SalesLead();
+        SalesLead second = new SalesLead();
+
+        List<SalesLead> result = LeadUtils.deduplicate(List.of(first, second));
+
+        assertEquals(2, result.size());
+    }
 }
