@@ -92,12 +92,50 @@ public class CodeEditorView extends BorderPane {
 
     private String getSampleScript() {
         return """
-                // Sample Groovy script – returns a list of lead names
+                // Sample Groovy script with JSoup scraping + de-duplication
                 import com.talaatharb.leadmanager.entity.SalesLead
+                import com.talaatharb.leadmanager.scripting.LeadUtils
+                import org.jsoup.Jsoup
 
-                def lead = new SalesLead("John Doe", "Acme Corp", "john@acme.com")
-                println "Created: ${lead}"
-                [lead]
+                def toLead = { card ->
+                    def lead = new SalesLead(
+                            card.selectFirst(".name")?.text(),
+                            card.selectFirst(".company")?.text(),
+                            card.selectFirst(".email")?.text()
+                    )
+                    lead.website = card.selectFirst(".website a")?.attr("href")
+                    lead.source = "Groovy Script Sample"
+                    lead
+                }
+
+                // Keep this sample runnable offline by parsing embedded HTML.
+                // For live scraping, replace Jsoup.parse(...) with Jsoup.connect(url).get().
+                def html = '''
+                    <section class="lead">
+                      <span class="name">Jane Doe</span>
+                      <span class="company">Acme Corp</span>
+                      <span class="email">jane@acme.com</span>
+                      <span class="website"><a href="https://acme.example">Website</a></span>
+                    </section>
+                    <section class="lead">
+                      <span class="name">Jane Doe</span>
+                      <span class="company">Acme Corp</span>
+                      <span class="email">jane@acme.com</span>
+                      <span class="website"><a href="https://acme.example">Website</a></span>
+                    </section>
+                    <section class="lead">
+                      <span class="name">Alex Smith</span>
+                      <span class="company">Beta Labs</span>
+                      <span class="email">alex@betalabs.io</span>
+                      <span class="website"><a href="https://betalabs.example">Website</a></span>
+                    </section>
+                '''
+
+                def doc = Jsoup.parse(html)
+                def leads = doc.select("section.lead").collect(toLead)
+                def deduplicatedLeads = LeadUtils.deduplicate(leads)
+                println "Scraped ${leads.size()} leads, unique: ${deduplicatedLeads.size()}"
+                deduplicatedLeads
                 """;
     }
 
