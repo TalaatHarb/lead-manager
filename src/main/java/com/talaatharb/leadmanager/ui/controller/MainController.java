@@ -11,7 +11,9 @@ import com.talaatharb.leadmanager.scraper.ScraperConfig;
 import com.talaatharb.leadmanager.scraper.WellfoundLeadFinder;
 import com.talaatharb.leadmanager.scraper.YCombinatorLeadFinder;
 import com.talaatharb.leadmanager.scripting.GroovyScriptRunner;
+import com.talaatharb.leadmanager.service.BackgroundTaskService;
 import com.talaatharb.leadmanager.tracking.LeadFinderTracker;
+import com.talaatharb.leadmanager.ui.task.ScraperTask;
 import com.talaatharb.leadmanager.ui.view.CodeEditorView;
 import com.talaatharb.leadmanager.ui.view.GraphEditorView;
 import javafx.collections.FXCollections;
@@ -55,13 +57,19 @@ public class MainController implements Initializable {
 
     @FXML private ComboBox<String> cbScraper;
     @FXML private TextArea taScraperLog;
+    @FXML private Button btnCancelScraper;
+    @FXML private ProgressIndicator scraperProgress;
 
     @FXML private BorderPane editorPane;
     @FXML private BorderPane graphPane;
 
+    @FXML private Label statusBar;
+
     private LeadRepository repository;
     private GroovyScriptRunner scriptRunner;
     private LeadFinderTracker leadFinderTracker;
+    private BackgroundTaskService taskService;
+    private ScraperTask activeScraperTask;
     private final ObservableList<SalesLead> leadData = FXCollections.observableArrayList();
 
     @Override
@@ -69,6 +77,7 @@ public class MainController implements Initializable {
         repository = new LeadRepository();
         scriptRunner = new GroovyScriptRunner();
         leadFinderTracker = new LeadFinderTracker();
+        taskService = new BackgroundTaskService();
 
         setupLeadsTable();
         setupStatusCombo();
@@ -109,7 +118,7 @@ public class MainController implements Initializable {
 
     private void setupCodeEditor() {
         if (editorPane != null) {
-            editorPane.setCenter(new CodeEditorView(scriptRunner, leadFinderTracker));
+            editorPane.setCenter(new CodeEditorView(scriptRunner, leadFinderTracker, taskService));
         }
     }
 
@@ -172,6 +181,11 @@ public class MainController implements Initializable {
 
     @FXML
     private void handleRunScraper() {
+        if (activeScraperTask != null && activeScraperTask.isRunning()) {
+            taScraperLog.appendText("A scraper is already running. Cancel it first.\n");
+            return;
+        }
+
         String scraperName = cbScraper.getValue();
         LeadFinder finder = switch (scraperName) {
             case "GitHub Trending" -> new GithubTrendingLeadFinder();
@@ -183,25 +197,86 @@ public class MainController implements Initializable {
         };
 
         ScraperConfig config = ScraperConfig.defaultConfig();
+        ScraperTask task = new ScraperTask(finder, config);
+        activeScraperTask = task;
 
-        taScraperLog.appendText("Running: " + finder.getName() + " ...\n");
-        new Thread(() -> {
-            try {
-                List<SalesLead> found = finder.findLatestHotLeads(config);
-                javafx.application.Platform.runLater(() -> {
-                    found.forEach(lead -> {
-                        repository.save(lead);
-                        leadData.add(lead);
-                        taScraperLog.appendText("  + " + lead.getName() + " [" + lead.getWebsite() + "]\n");
-                    });
-                    taScraperLog.appendText("Done. Found " + found.size() + " leads.\n");
-                });
-            } catch (Exception ex) {
-                log.error("Scraper '{}' threw an unexpected exception", finder.getName(), ex);
-                javafx.application.Platform.runLater(() ->
-                        taScraperLog.appendText("ERROR: " + ex.getMessage() + "\n"));
+        // Unbind from any previous task before rebinding
+        scraperProgress.visibleProperty().unbind();
+        scraperProgress.progressProperty().unbind();
+        btnCancelScraper.disableProperty().unbind();
+        if (statusBar != null) {
+            statusBar.textProperty().unbind();
+        }
+
+        // Bind scraper progress indicator and cancel button
+        scraperProgress.visibleProperty().bind(task.runningProperty());
+        scraperProgress.progressProperty().bind(task.progressProperty());
+        btnCancelScraper.disableProperty().bind(task.runningProperty().not());
+        if (statusBar != null) {
+            statusBar.textProperty().bind(task.messageProperty());
+        }
+
+        task.setOnScheduled(e ->
+                taScraperLog.appendText("Scheduled: " + finder.getName() + "\n"));
+
+        task.setOnSucceeded(e -> {
+            List<SalesLead> found = task.getValue();
+            found.forEach(lead -> {
+                repository.save(lead);
+                leadData.add(lead);
+                taScraperLog.appendText("  + " + lead.getName() + " [" + lead.getWebsite() + "]\n");
+            });
+            taScraperLog.appendText("Done. Found " + found.size() + " leads.\n");
+            if (statusBar != null) {
+                statusBar.textProperty().unbind();
+                statusBar.setText("Done. Found " + found.size() + " leads.");
             }
-        }, "scraper-thread").start();
+            scraperProgress.progressProperty().unbind();
+            scraperProgress.visibleProperty().unbind();
+            scraperProgress.setVisible(false);
+            scraperProgress.setProgress(0);
+            btnCancelScraper.disableProperty().unbind();
+            btnCancelScraper.setDisable(true);
+        });
+
+        task.setOnFailed(e -> {
+            Throwable ex = task.getException();
+            log.error("Scraper '{}' failed", finder.getName(), ex);
+            taScraperLog.appendText("ERROR: " + (ex != null ? ex.getMessage() : "unknown error") + "\n");
+            if (statusBar != null) {
+                statusBar.textProperty().unbind();
+                statusBar.setText("Scraper failed.");
+            }
+            scraperProgress.progressProperty().unbind();
+            scraperProgress.visibleProperty().unbind();
+            scraperProgress.setVisible(false);
+            scraperProgress.setProgress(0);
+            btnCancelScraper.disableProperty().unbind();
+            btnCancelScraper.setDisable(true);
+        });
+
+        task.setOnCancelled(e -> {
+            taScraperLog.appendText("Cancelled: " + finder.getName() + "\n");
+            if (statusBar != null) {
+                statusBar.textProperty().unbind();
+                statusBar.setText("Scraper cancelled.");
+            }
+            scraperProgress.progressProperty().unbind();
+            scraperProgress.visibleProperty().unbind();
+            scraperProgress.setVisible(false);
+            scraperProgress.setProgress(0);
+            btnCancelScraper.disableProperty().unbind();
+            btnCancelScraper.setDisable(true);
+        });
+
+        taskService.submit(task);
+    }
+
+    @FXML
+    private void handleCancelScraper() {
+        if (activeScraperTask != null) {
+            activeScraperTask.cancel();
+        }
     }
 
     private void loadLeads() {
@@ -244,6 +319,12 @@ public class MainController implements Initializable {
 
     @FXML
     private void handleExit() {
+        if (activeScraperTask != null) {
+            activeScraperTask.cancel();
+        }
+        if (taskService != null) {
+            taskService.close();
+        }
         if (leadFinderTracker != null) {
             leadFinderTracker.close();
         }
