@@ -14,6 +14,12 @@ import java.util.List;
  * {@link Task} API so the UI can bind to {@link #progressProperty()},
  * {@link #messageProperty()}, and {@link #exceptionProperty()} without
  * any manual {@code Platform.runLater} calls in the controller.
+ * <p>
+ * <b>Cancellation note:</b> cancellation is checked after
+ * {@link LeadFinder#findLatestHotLeads(ScraperConfig)} returns. Because most
+ * scrapers make blocking HTTP calls, cancellation will not interrupt the
+ * in-flight network request; the task will stop producing results only after
+ * the current request completes.
  */
 public class ScraperTask extends Task<List<SalesLead>> {
 

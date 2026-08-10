@@ -200,6 +200,14 @@ public class MainController implements Initializable {
         ScraperTask task = new ScraperTask(finder, config);
         activeScraperTask = task;
 
+        // Unbind from any previous task before rebinding
+        scraperProgress.visibleProperty().unbind();
+        scraperProgress.progressProperty().unbind();
+        btnCancelScraper.disableProperty().unbind();
+        if (statusBar != null) {
+            statusBar.textProperty().unbind();
+        }
+
         // Bind scraper progress indicator and cancel button
         scraperProgress.visibleProperty().bind(task.runningProperty());
         scraperProgress.progressProperty().bind(task.progressProperty());
@@ -224,7 +232,11 @@ public class MainController implements Initializable {
                 statusBar.setText("Done. Found " + found.size() + " leads.");
             }
             scraperProgress.progressProperty().unbind();
+            scraperProgress.visibleProperty().unbind();
+            scraperProgress.setVisible(false);
             scraperProgress.setProgress(0);
+            btnCancelScraper.disableProperty().unbind();
+            btnCancelScraper.setDisable(true);
         });
 
         task.setOnFailed(e -> {
@@ -236,7 +248,11 @@ public class MainController implements Initializable {
                 statusBar.setText("Scraper failed.");
             }
             scraperProgress.progressProperty().unbind();
+            scraperProgress.visibleProperty().unbind();
+            scraperProgress.setVisible(false);
             scraperProgress.setProgress(0);
+            btnCancelScraper.disableProperty().unbind();
+            btnCancelScraper.setDisable(true);
         });
 
         task.setOnCancelled(e -> {
@@ -246,7 +262,11 @@ public class MainController implements Initializable {
                 statusBar.setText("Scraper cancelled.");
             }
             scraperProgress.progressProperty().unbind();
+            scraperProgress.visibleProperty().unbind();
+            scraperProgress.setVisible(false);
             scraperProgress.setProgress(0);
+            btnCancelScraper.disableProperty().unbind();
+            btnCancelScraper.setDisable(true);
         });
 
         taskService.submit(task);
